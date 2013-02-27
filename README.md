@@ -1,4 +1,4 @@
-parsehex
+Parsehex
 ========
 
-Parsing Intel Hex files
+A small utility for parsing and annotating Intel Hex files
