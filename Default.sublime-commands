@@ -1,0 +1,6 @@
+[
+    {
+        "caption": "Intel Hex: Decode and annotate",
+        "command": "intelhex"
+    }
+]

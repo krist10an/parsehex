@@ -58,7 +58,7 @@ class IntelHexDecoder(object):
 
         comment = "; " + self.record_name(recordtype) + " @ " + str(address)
 
-        return "%s%2s %4s %2s %32s %2s %s" % (start, raw_hex(bytecount), raw_hex(address), raw_hex(recordtype), data, raw_hex(checksum), comment)
+        return "%s%2s %4s %2s %s %2s %s" % (start, raw_hex(bytecount), raw_hex(address), raw_hex(recordtype), data.ljust(32), raw_hex(checksum), comment)
 
 
 if __name__ == "__main__":
