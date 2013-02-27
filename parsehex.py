@@ -56,7 +56,7 @@ class IntelHexDecoder(object):
             self.extended_segment_base_address = 0
             print "ela: ", self.extended_linear_address, address
 
-        comment = "; " + self.record_name(recordtype) + " @ " + str(address)
+        comment = "# " + self.record_name(recordtype) + " @ " + str(address)
 
         return "%s%2s %4s %2s %s %2s %s" % (start, raw_hex(bytecount), raw_hex(address), raw_hex(recordtype), data.ljust(32), raw_hex(checksum), comment)
 
