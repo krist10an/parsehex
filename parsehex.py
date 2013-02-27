@@ -1,71 +1,83 @@
 
 import sys
 
-try:
-    filename = sys.argv[1]
-    print "Loading ", filename
-except IndexError:
-    from os.path import split
-    print "Usage: ", split(sys.argv[0])[1], "<filename>"
-    sys.exit()
+def raw_hex(val):
+    return hex(val)[2:].upper()
 
-f = open(filename)
-
-records = [ 'Data record',
+class IntelHexDecoder(object):
+    def __init__(self):
+        self.records = [ 'Data record',
             'End Of File record',
             'Extended Segment Address Record',
             'Start Segment Address Record',
             'Extended Linear Address Record',
             'Start Linear Address Record' ]
+        self.extended_segment_base_address = 0
+        self.extended_linear_address = 0
 
-print "startcode bytecount address recordtype data  checksum"
-print "example:"
-print ":         10        0000    00         12345 FF"
-print ""
+    def record_name(self, id):
+        return self.records[id]
 
-extended_segment_base_address = 0
-extended_linear_address = 0
+    def tokenize(self, line):
+        start, bytecount, address, recordtype, data = line[0:1], line[1:3], line[3:7], line[7:9], line[9:]
+        if start != ":":
+            return None
 
-for line in f.readlines():
-    line = line.strip()
+        try:
+            bytecount = int(bytecount, 16)
+            bc = bytecount * 2
+            checksum = data[bc:]
+            data = data[0:bc]
+        except ValueError:
+            return None
 
-    checksum = 0
-    start, bytecount, address, recordtype, data = \
-           line[0:1], line[1:3], line[3:7], line[7:9], line[9:]
+        try:
+            checksum = int(checksum, 16)
+            recordtype = int(recordtype, 16)
+            address = int(address, 16)
+        except ValueError:
+            return None
 
-    # split out checksum
+        return start, bytecount, address, recordtype, data, checksum
+
+    def decode_line(self, line):
+        tokens = self.tokenize(line)
+        if tokens is None:
+            return None
+
+        start, bytecount, address, recordtype, data, checksum = tokens
+
+        if recordtype == 2:
+            self.extended_segment_base_address = int(data, 16) << 4
+            self.extended_linear_address = 0
+            print "esba: ", self.extended_segment_base_address, address
+        if recordtype == 4:
+            self.extended_linear_address = int(data, 16) << 16
+            self.extended_segment_base_address = 0
+            print "ela: ", self.extended_linear_address, address
+
+        comment = "; " + self.record_name(recordtype) + " @ " + str(address)
+
+        return "%s%2s %4s %2s %32s %2s %s" % (start, raw_hex(bytecount), raw_hex(address), raw_hex(recordtype), data, raw_hex(checksum), comment)
+
+
+if __name__ == "__main__":
     try:
-        bc = int(bytecount, 16) * 2
-        checksum = data[bc:]
-        data = data[0:bc]
-    except ValueError:
-        pass
+        filename = sys.argv[1]
+        print "Loading ", filename
+    except IndexError:
+        from os.path import split
+        print "Usage: ", split(sys.argv[0])[1], "<filename>"
+        sys.exit()
 
-    try:
-        recordtype = int(recordtype)
-        comment = " - " + records[recordtype]
+    f = open(filename)
 
-    except ValueError:
-        recordtype = -1
-        comment = ""
+    print "startcode bytecount address recordtype data  checksum"
+    print "example:"
+    print ":         10        0000    00         12345 FF"
+    print ""
 
-    try:
-        address = int(address, 16)
-    except ValueError:
-        print "convert error"
-        address = "unknown"
+    decoder = IntelHexDecoder()
 
-    if recordtype == 2:
-        extended_segment_base_address = int(data, 16) << 4
-        extended_linear_address = 0
-        print "esba: ", extended_segment_base_address, address
-    if recordtype == 4:
-        extended_linear_address = int(data, 16) << 16
-        extended_segment_base_address = 0
-        print "ela: ", extended_linear_address, address
-
-    ad = 0
-    if recordtype == 0:
-        ad = extended_linear_address + extended_segment_base_address + address
-
-    print start, bytecount, address, recordtype, data, checksum, comment, "@", hex(ad)
+    for line in f.readlines():
+        print decoder.decode_line(line.strip())
