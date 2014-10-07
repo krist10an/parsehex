@@ -1,5 +1,9 @@
 import sublime, sublime_plugin
-from parsehex import *
+import sys
+if sys.version_info[0] >= 3:
+    from .parsehex import *
+else:
+    from parsehex import *
 
 class IntelhexCommand(sublime_plugin.TextCommand):
     def run(self, edit):

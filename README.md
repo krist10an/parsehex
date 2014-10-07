@@ -6,7 +6,7 @@ A small utility for parsing and annotating Intel Hex files.
 
 Use parsehex.py from the command line.
 
-## Sublime text 2
+## Sublime text 2 and 3
 
 To install plugin you need:
 
