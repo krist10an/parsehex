@@ -16,3 +16,6 @@ To install plugin you need:
 
 3) Done, use Ctrl-Shift-P to access Intel Hex Decoding
 
+## Highlighting
+
+parsehex.tmLanguage adds syntax highlighting of the annotated file in Sublime Text. Press CTRL+SHIFT+p and choose 'Set Syntax: Parsehex'.
