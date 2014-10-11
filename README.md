@@ -18,4 +18,4 @@ To install plugin you need:
 
 ## Highlighting
 
-parsehex.tmLanguage adds syntax highlighting of the annotated file in Sublime Text. Press CTRL+SHIFT+p and choose 'Set Syntax: Parsehex'.
+parsehex.tmLanguage adds highlighting of the annotated file in Sublime Text. Press Ctrl-Shift-P and choose 'Set Syntax: Parsehex'.
