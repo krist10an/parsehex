@@ -50,11 +50,11 @@ class IntelHexDecoder(object):
         if recordtype == 2:
             self.extended_segment_base_address = int(data, 16) << 4
             self.extended_linear_address = 0
-            print "esba: ", self.extended_segment_base_address, address
+            print("esba: ", self.extended_segment_base_address, address)
         if recordtype == 4:
             self.extended_linear_address = int(data, 16) << 16
             self.extended_segment_base_address = 0
-            print "ela: ", self.extended_linear_address, address
+            print("ela: ", self.extended_linear_address, address)
 
         comment = "# " + self.record_name(recordtype) + " @ " + str(address)
 
@@ -64,20 +64,20 @@ class IntelHexDecoder(object):
 if __name__ == "__main__":
     try:
         filename = sys.argv[1]
-        print "Loading ", filename
+        print("Loading ", filename)
     except IndexError:
         from os.path import split
-        print "Usage: ", split(sys.argv[0])[1], "<filename>"
+        print("Usage: ", split(sys.argv[0])[1], "<filename>")
         sys.exit()
 
     f = open(filename)
 
-    print "startcode bytecount address recordtype data  checksum"
-    print "example:"
-    print ":         10        0000    00         12345 FF"
-    print ""
+    print("startcode bytecount address recordtype data  checksum")
+    print("example:")
+    print(":         10        0000    00         12345 FF")
+    print("")
 
     decoder = IntelHexDecoder()
 
     for line in f.readlines():
-        print decoder.decode_line(line.strip())
+        print(decoder.decode_line(line.strip()))

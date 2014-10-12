@@ -1,0 +1,54 @@
+<!-- This work by agren is licensed under a Creative Commons Attribution-ShareAlike 4.0 International License -->
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+	<dict>
+		<key>name</key>
+	    <string>Parsehex</string>
+	    <key>patterns</key>
+	    <array>
+		    <dict>
+		        <key>match</key>
+		        <string>\s*(#.*)$</string>
+		        <key>name</key>
+		        <string>comment.line.number-sign.parsehex</string>
+		    </dict>
+		    <dict>
+		    	<key>match</key>
+		    	<string>\s*:\s?(\h+)\s+(\h+)\s+(\h+)\s+(\h+)\s+(\h+)\s+(.*Data.*)$</string>
+		    	<key>captures</key>
+		    	<dict>
+		    		<key>1</key>
+		    		<dict>
+		    			<key>name</key>
+		    			<string>constant.numeric.parsehex</string>
+		    		</dict>
+		    		<key>2</key>
+		    		<dict>
+		    			<key>name</key>
+		    			<string>entity.name.function.parsehex</string>
+		    		</dict>
+		    		<key>3</key>
+		    		<dict>
+		    			<key>name</key>
+		    			<string>keyword.operator.parsehex</string>
+		    		</dict>
+		    		<key>4</key>
+		    		<dict>
+		    			<key>name</key>
+		    			<string>support.class.parsehex</string>
+		    		</dict>
+		    		<key>6</key>
+		    		<dict>
+		    			<key>name</key>
+		    			<string>comment.line.number-sign.parsehex</string>
+		    		</dict>
+		    	</dict>
+		    </dict>
+		</array>
+		<key>scopeName</key>
+	    <string>source.parsehex</string>
+	    <key>uuid</key>
+	    <string>3A406474-F23F-4495-BF50-C152610245B9</string>
+	</dict>
+</plist>
