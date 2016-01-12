@@ -1,9 +1,10 @@
-import sublime, sublime_plugin
+import sublime
+import sublime_plugin
 import sys
 if sys.version_info[0] >= 3:
-    from .parsehex import *
+    from .parsehex import IntelHexDecoder
 else:
-    from parsehex import *
+    from parsehex import IntelHexDecoder
 
 class IntelhexCommand(sublime_plugin.TextCommand):
     def run(self, edit):
@@ -15,7 +16,7 @@ class IntelhexCommand(sublime_plugin.TextCommand):
         filename = view.file_name()
         title = ""
         if filename:
-            title = "# Decoded Intel hex file" + filename + "\n"
+            title = "# Decoded Intel hex file {}\n".format(filename)
 
         # Text is selected: if there are more than 1 region or region one and it's not empty
         if len(regions) > 1 or not regions[0].empty():
@@ -29,6 +30,7 @@ class IntelhexCommand(sublime_plugin.TextCommand):
             window = self.view.window()
             new_view = window.new_file()
             new_view.set_scratch(True)
+            new_view.set_syntax_file("Packages/parsehex/parsehex.tmLanguage")
 
             alltextreg = sublime.Region(0, view.size())
             s = view.substr(alltextreg)
@@ -38,6 +40,8 @@ class IntelhexCommand(sublime_plugin.TextCommand):
     def decode_intel_hex(self, lines):
         d = IntelHexDecoder()
         c = []
+        c.append("#:bytecount address recordtype data checksum")
+
         for line in lines.split('\n'):
             res = d.decode_line(line.strip())
             if res is None:

@@ -1,65 +1,131 @@
-
+from __future__ import print_function
 import sys
 
 def raw_hex(val):
-    return hex(val)[2:].upper()
+    return hex(val)[2:].zfill(2).upper()
+
+def raw_hex_list(val):
+    return "".join(raw_hex(x) for x in val)
+
+def to_address(high, low):
+    return (1 << 8) * high + low
+
+class IntelHexRecord(object):
+    records = [
+        'Data',
+        'End Of File',
+        'Extended Segment Address',
+        'Start Segment Address',
+        'Extended Linear Address',
+        'Start Linear Address'
+    ]
+
+    def __init__(self, start, bytecount, address, recordtype, data, checksum):
+        self.start = start
+        self.bytecount = bytecount
+        self.address = address
+        self.recordtype = recordtype
+        self.data = data
+        self.checksum = checksum
+
+    @property
+    def addr(self):
+        return to_address(self.address[0], self.address[1])
+
+    def record_name(self, id):
+        return IntelHexRecord.records[self.recordtype] + " record"
+
+    def is_checksum_ok(self):
+        all_data = []
+        all_data.append(self.bytecount)
+        all_data.extend(self.address)
+        all_data.append(self.recordtype)
+        all_data.extend(self.data)
+        all_data.append(self.checksum)
+
+        checksum = 0
+        for num in all_data:
+            checksum = (checksum + num) % 256
+
+        return checksum == 0
+
+    def to_hexline(self):
+        return ":{bc}{ad}{rt}{data}{cs}".format(
+            bc=raw_hex(self.bytecount),
+            ad=raw_hex_list(self.address),
+            rt=raw_hex(self.recordtype),
+            data=raw_hex_list(self.data),
+            cs=raw_hex(self.checksum))
+
+    def to_extended(self):
+        return ":{bc} {ad} {rt} {data} {cs}".format(
+            bc=raw_hex(self.bytecount),
+            ad=raw_hex_list(self.address),
+            rt=raw_hex(self.recordtype),
+            data=raw_hex_list(self.data),
+            cs=raw_hex(self.checksum))
+
+    def to_extended_with_comment(self, offset=0):
+        comment = "{} byte {} record @ {}".format(
+            self.bytecount,
+            IntelHexRecord.records[self.recordtype],
+            self.addr + offset)
+
+        if not self.is_checksum_ok():
+            comment = comment + " Checksum error!"
+
+        return ":{bc} {ad} {rt} {data} {cs} # {cmt}".format(
+            bc=raw_hex(self.bytecount),
+            ad=raw_hex_list(self.address),
+            rt=raw_hex(self.recordtype),
+            data=raw_hex_list(self.data),
+            cs=raw_hex(self.checksum),
+            cmt=comment)
+
 
 class IntelHexDecoder(object):
     def __init__(self):
-        self.records = [ 'Data record',
-            'End Of File record',
-            'Extended Segment Address Record',
-            'Start Segment Address Record',
-            'Extended Linear Address Record',
-            'Start Linear Address Record' ]
         self.extended_segment_base_address = 0
         self.extended_linear_address = 0
 
-    def record_name(self, id):
-        return self.records[id]
-
     def tokenize(self, line):
-        start, bytecount, address, recordtype, data = line[0:1], line[1:3], line[3:7], line[7:9], line[9:]
+        start, bytecount, remaining = line[0:1], line[1:3], line[3:]
         if start != ":":
             return None
 
         try:
             bytecount = int(bytecount, 16)
-            bc = bytecount * 2
-            checksum = data[bc:]
-            data = data[0:bc]
         except ValueError:
             return None
 
-        try:
-            checksum = int(checksum, 16)
-            recordtype = int(recordtype, 16)
-            address = int(address, 16)
-        except ValueError:
-            return None
+        values = []
+        for count in range(2 + 1 + bytecount + 1):
+            try:
+                num = int(remaining[0:2], 16)
+                values.append(num)
+            except ValueError:
+                return None
+            remaining = remaining[2:]
 
-        return start, bytecount, address, recordtype, data, checksum
+        address = values[0:2]
+        recordtype = values[2]
+        data = values[3:bytecount + 3]
+        checksum = values[bytecount + 3]
+        return IntelHexRecord(start, bytecount, address, recordtype, data, checksum)
 
     def decode_line(self, line):
-        tokens = self.tokenize(line)
-        if tokens is None:
+        hex_record = self.tokenize(line)
+        if hex_record is None:
             return None
 
-        start, bytecount, address, recordtype, data, checksum = tokens
-
-        if recordtype == 2:
-            self.extended_segment_base_address = int(data, 16) << 4
+        if hex_record.recordtype == 2:
+            self.extended_segment_base_address = to_address(hex_record.data[0], hex_record.data[1]) << 4
             self.extended_linear_address = 0
-            print("esba: ", self.extended_segment_base_address, address)
-        if recordtype == 4:
-            self.extended_linear_address = int(data, 16) << 16
+        if hex_record.recordtype == 4:
+            self.extended_linear_address = to_address(hex_record.data[0], hex_record.data[1]) << 16
             self.extended_segment_base_address = 0
-            print("ela: ", self.extended_linear_address, address)
 
-        comment = "# " + self.record_name(recordtype) + " @ " + str(address)
-
-        return "%s%2s %4s %2s %s %2s %s" % (start, raw_hex(bytecount), raw_hex(address), raw_hex(recordtype), data.ljust(32), raw_hex(checksum), comment)
-
+        return hex_record.to_extended_with_comment(offset=self.extended_linear_address + self.extended_segment_base_address)
 
 if __name__ == "__main__":
     try:
